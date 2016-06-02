@@ -50,6 +50,7 @@ export default class AppController {
   _uiInitialised(toggleSwitch) {
     this._stateChangeListener = this._stateChangeListener.bind(this);
     this._subscriptionUpdate = this._subscriptionUpdate.bind(this);
+    this._copyCurlCommand = this._copyCurlCommand.bind(this);
 
     this._toggleSwitch = toggleSwitch;
     this._pushClient = new PushClient(
@@ -75,6 +76,16 @@ export default class AppController {
           this._payloadTextField.value);
       }
     });
+
+    if ('queryCommandSupported' in document &&
+        document.queryCommandSupported('copy')) {
+      const copyCurlCommandContainer =
+        document.querySelector('.js-copy-curl-code-container');
+      copyCurlCommandContainer.classList.remove('hidden');
+
+      document.querySelector('.js-copy-curl-code-button')
+      .addEventListener('click', () => this._copyCurlCommand);
+    }
   }
 
   registerServiceWorker() {
@@ -396,5 +407,26 @@ export default class AppController {
     const pushOptionsContainer = document
       .querySelector('.js-send-push-options');
     pushOptionsContainer.style.display = 'none';
+  }
+
+  _copyCurlCommand() {
+    const curlCodeElement = document.querySelector('.js-curl-code');
+
+    const range = document.createRange();
+    range.selectNode(curlCodeElement);
+    window.getSelection().addRange(range);
+    try {
+      const successful = document.execCommand('copy');
+      const msg = successful ? 'succeeded' : 'failed';
+      console.log('Copy email command ' + msg);
+
+      if (successful) {
+        // TODO(benoit) show toaster
+        console.log('did copied');
+      }
+    } catch (err) {
+      console.log('Unable to copy');
+    }
+    window.getSelection().removeAllRanges();
   }
 }
